@@ -22,10 +22,10 @@ warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)  # Suppress w
 
 from datetime import datetime, timedelta, timezone
 
+from urllib.parse import urlparse
+
 def fetch_news():
     articles = []
-    
-    # Make cutoff_date offset-aware by adding UTC timezone
     cutoff_date = (datetime.utcnow() - timedelta(days=1)).replace(tzinfo=timezone.utc)
 
     for url in NEWS_SOURCES:
@@ -42,12 +42,15 @@ def fetch_news():
                 pub_date = item.find("pubDate")
                 pub_date = pub_date.text.strip() if pub_date else "Unknown"
 
+                # Extract the news source from the link
+                source = "Unknown Source"
+                if link != "No link available":
+                    parsed_url = urlparse(link)
+                    source = parsed_url.netloc.replace("www.", "")
+
                 if pub_date != "Unknown":
                     try:
-                        # Parse pub_date as an offset-aware datetime
                         article_date = datetime.strptime(pub_date, "%a, %d %b %Y %H:%M:%S %z")
-                        
-                        # Now comparison is valid since both are offset-aware
                         if article_date < cutoff_date:
                             continue
                     except ValueError:
@@ -56,7 +59,8 @@ def fetch_news():
                 articles.append({
                     "title": title,
                     "link": link,
-                    "published": pub_date
+                    "published": pub_date,
+                    "source": source  # ✅ Added source field
                 })
 
         except requests.exceptions.Timeout:
@@ -67,7 +71,6 @@ def fetch_news():
             print(f"🚨 Unexpected error: {e}")
 
     return articles
-
 
 @app.get("/news")
 def get_news():
