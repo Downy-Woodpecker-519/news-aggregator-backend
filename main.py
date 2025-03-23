@@ -1,12 +1,10 @@
-
-from fastapi import FastAPI, Query
+from fastapi import FastAPI
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 
 app = FastAPI()
 
-# List of news sources (RSS feeds where available)
 NEWS_SOURCES = [
     "https://www.cbc.ca/cmlink/rss-world",
     "https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009",
@@ -17,28 +15,25 @@ NEWS_SOURCES = [
     "https://www.reuters.com/rssFeed/worldNews",
 ]
 
-# Function to fetch and filter news
-
 def fetch_news():
     articles = []
     cutoff_date = datetime.utcnow() - timedelta(days=1)
     
     for url in NEWS_SOURCES:
         try:
-            response = requests.get(url, timeout=10)
-            soup = BeautifulSoup(response.content, "xml")
+            response = requests.get(url, timeout=20)  # Increased timeout
+            soup = BeautifulSoup(response.content, "lxml")  # Use lxml parser
 
             for item in soup.find_all("item"):
                 title = item.title.text
                 link = item.link.text
                 pub_date = item.pubDate.text if item.pubDate else "Unknown"
 
-                if pub_date != "Unknown":
-                    article_date = datetime.strptime(pub_date, "%a, %d %b %Y %H:%M:%S %z")
-                    if article_date < cutoff_date:
-                        continue
-
-                articles.append({"title": title, "link": link, "published": pub_date})
+                articles.append({
+                    "title": title,
+                    "link": link,
+                    "published": pub_date
+                })
 
         except Exception as e:
             print(f"❌ Error fetching {url}: {e}")  # Debugging log
