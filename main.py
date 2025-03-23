@@ -20,25 +20,34 @@ from bs4 import XMLParsedAsHTMLWarning
 
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)  # Suppress warning
 
+from datetime import datetime, timedelta, timezone
+
 def fetch_news():
     articles = []
-    cutoff_date = datetime.utcnow() - timedelta(days=1)
+    
+    # Make cutoff_date offset-aware by adding UTC timezone
+    cutoff_date = (datetime.utcnow() - timedelta(days=1)).replace(tzinfo=timezone.utc)
 
     for url in NEWS_SOURCES:
         try:
-            response = requests.get(url, timeout=30)  # Increased timeout to 30 seconds
-            response.raise_for_status()  # Raise error for bad responses
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
 
-            soup = BeautifulSoup(response.content, "xml")  # Corrected parser usage
+            soup = BeautifulSoup(response.content, "xml")
 
             for item in soup.find_all("item"):
                 title = item.title.text.strip() if item.title else "No title available"
-                link = item.link.text.strip() if item.link else item.guid.text.strip() if item.guid else "No link available"
-                pub_date = item.pubDate.text.strip() if item.pubDate else "Unknown"
+                link = item.find("link")
+                link = link.text.strip() if link else "No link available"
+                pub_date = item.find("pubDate")
+                pub_date = pub_date.text.strip() if pub_date else "Unknown"
 
                 if pub_date != "Unknown":
                     try:
+                        # Parse pub_date as an offset-aware datetime
                         article_date = datetime.strptime(pub_date, "%a, %d %b %Y %H:%M:%S %z")
+                        
+                        # Now comparison is valid since both are offset-aware
                         if article_date < cutoff_date:
                             continue
                     except ValueError:
@@ -54,9 +63,10 @@ def fetch_news():
             print(f"⏳ Timeout: {url} - Skipping slow source")
         except requests.exceptions.RequestException as e:
             print(f"❌ Error fetching {url}: {e}")
+        except Exception as e:
+            print(f"🚨 Unexpected error: {e}")
 
     return articles
-
 
 
 @app.get("/news")
