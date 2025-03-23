@@ -1,19 +1,20 @@
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import requests
+from bs4 import BeautifulSoup
+from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 
+app = FastAPI()  # ✅ Define app first
+
+# ✅ Add CORS middleware after app definition
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins (you can restrict it to your Vercel frontend)
+    allow_origins=["*"],  # Allows all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-from fastapi import FastAPI
-import requests
-from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
-
-app = FastAPI()
 
 NEWS_SOURCES = [
     "https://www.cbc.ca/cmlink/rss-world",
