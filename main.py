@@ -14,7 +14,7 @@ app.add_middleware(
 )
 
 # GNews API Key (Replace with your actual key)
-GNEWS_API_KEY = "YOUR_GNEWS_API_KEY"
+GNEWS_API_KEY = "b47947106d7c0cb0c816ceea718bcdae"
 GNEWS_URL = "https://gnews.io/api/v4/top-headlines"
 
 # Fetch news from GNews API for a given topic and countries
