@@ -27,24 +27,21 @@ def fetch_news():
         try:
             response = requests.get(url, timeout=10)
             soup = BeautifulSoup(response.content, "xml")
-            
+
             for item in soup.find_all("item"):
                 title = item.title.text
                 link = item.link.text
-                pub_date = item.pubDate.text if item.pubDate else None
-                
-                if pub_date:
+                pub_date = item.pubDate.text if item.pubDate else "Unknown"
+
+                if pub_date != "Unknown":
                     article_date = datetime.strptime(pub_date, "%a, %d %b %Y %H:%M:%S %z")
                     if article_date < cutoff_date:
                         continue
-                
-                articles.append({
-                    "title": title,
-                    "link": link,
-                    "published": pub_date
-                })
+
+                articles.append({"title": title, "link": link, "published": pub_date})
+
         except Exception as e:
-            print(f"Error fetching {url}: {e}")
+            print(f"❌ Error fetching {url}: {e}")  # Debugging log
     
     return articles
 
