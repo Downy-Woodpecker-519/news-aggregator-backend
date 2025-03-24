@@ -26,7 +26,7 @@ def fetch_news(topic, countries, max_articles, single_request=False):
     all_articles = []
     
     if single_request:
-        # Make ONE request for Technology (instead of 3)
+        logging.info(f"Requesting {max_articles} {topic.upper()} articles from GNews (Single Request)")
         params = {
             "token": GNEWS_API_KEY,
             "lang": "en",
@@ -55,6 +55,8 @@ def fetch_news(topic, countries, max_articles, single_request=False):
     # For General & Business, request per country
     articles_per_country = max_articles // len(countries)
     for country in countries:
+        logging.info(f"Requesting {articles_per_country} {topic.upper()} articles from {country} in GNews")
+        
         params = {
             "token": GNEWS_API_KEY,
             "lang": "en",
@@ -83,12 +85,3 @@ def fetch_news(topic, countries, max_articles, single_request=False):
 
     logging.info(f"Total {topic.upper()} articles collected: {len(all_articles)}")
     return all_articles
-
-@app.get("/news")
-def get_news():
-    news_data = {
-        "General News (Canada)": fetch_news("general", ["ca"], 20),
-        "Business News (Canada & USA)": fetch_news("business", ["ca", "us"], 20),
-        "Technology News (Global)": fetch_news("technology", [], 20, single_request=True),
-    }
-    return news_data
