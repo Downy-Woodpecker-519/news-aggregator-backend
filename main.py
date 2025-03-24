@@ -21,11 +21,39 @@ GNEWS_URL = "https://gnews.io/api/v4/top-headlines"
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 
-# Fetch news per country for more specificity
-def fetch_news(topic, countries, max_articles):
+# Fetch news per country, except for technology (1 request for all)
+def fetch_news(topic, countries, max_articles, single_request=False):
     all_articles = []
+    
+    if single_request:
+        # Make ONE request for Technology (instead of 3)
+        params = {
+            "token": GNEWS_API_KEY,
+            "lang": "en",
+            "max": max_articles,
+            "topic": topic
+        }
+        response = requests.get(GNEWS_URL, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            articles = [
+                {
+                    "title": article["title"],
+                    "link": article["url"],
+                    "published": article["publishedAt"],
+                    "source": article["source"]["name"],
+                    "topic": topic
+                }
+                for article in data.get("articles", [])
+            ]
+            logging.info(f"{topic.upper()} NEWS: {len(articles)} articles fetched.")
+            return articles
+        else:
+            logging.warning(f"Failed to fetch {topic} news: {response.status_code}")
+            return []
+    
+    # For General & Business, request per country
     articles_per_country = max_articles // len(countries)
-
     for country in countries:
         params = {
             "token": GNEWS_API_KEY,
@@ -34,7 +62,6 @@ def fetch_news(topic, countries, max_articles):
             "max": articles_per_country,
             "topic": topic
         }
-
         response = requests.get(GNEWS_URL, params=params)
         if response.status_code == 200:
             data = response.json()
@@ -62,6 +89,6 @@ def get_news():
     news_data = {
         "General News (Canada)": fetch_news("general", ["ca"], 20),
         "Business News (Canada & USA)": fetch_news("business", ["ca", "us"], 20),
-        "Technology News (Canada, USA & UK)": fetch_news("technology", ["ca", "us", "gb"], 20),
+        "Technology News (Global)": fetch_news("technology", [], 20, single_request=True),
     }
     return news_data
