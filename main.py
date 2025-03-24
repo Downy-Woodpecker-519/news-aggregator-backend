@@ -2,7 +2,9 @@ import requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+
 app = FastAPI()
+
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
@@ -11,16 +13,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # GNews API Key
 GNEWS_API_KEY = "b47947106d7c0cb0c816ceea718bcdae"
 GNEWS_URL = "https://gnews.io/api/v4/top-headlines"
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
+
 # Fetch news per country for more specificity
 def fetch_news(topic, countries, max_articles):
     all_articles = []
     articles_per_country = max_articles // len(countries)
-for country in countries:
+
+    for country in countries:
         params = {
             "token": GNEWS_API_KEY,
             "lang": "en",
@@ -28,7 +34,8 @@ for country in countries:
             "max": articles_per_country,
             "topic": topic
         }
-response = requests.get(GNEWS_URL, params=params)
+
+        response = requests.get(GNEWS_URL, params=params)
         if response.status_code == 200:
             data = response.json()
             articles = [
@@ -46,8 +53,10 @@ response = requests.get(GNEWS_URL, params=params)
             all_articles.extend(articles)
         else:
             logging.warning(f"Failed to fetch {topic} news from {country}: {response.status_code}")
-logging.info(f"Total {topic.upper()} articles collected: {len(all_articles)}")
+
+    logging.info(f"Total {topic.upper()} articles collected: {len(all_articles)}")
     return all_articles
+
 @app.get("/news")
 def get_news():
     news_data = {
@@ -56,5 +65,3 @@ def get_news():
         "Technology News (Canada, USA & UK)": fetch_news("technology", ["ca", "us", "gb"], 20),
     }
     return news_data
-
-
