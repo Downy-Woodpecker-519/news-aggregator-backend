@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 # Fetch news per country, except for technology (1 request for all)
 def fetch_news(topic, countries, max_articles, single_request=False):
     all_articles = []
-    
+
     if single_request:
         logging.info(f"Requesting {max_articles} {topic.upper()} articles from GNews (Single Request)")
         params = {
@@ -51,12 +51,12 @@ def fetch_news(topic, countries, max_articles, single_request=False):
         else:
             logging.warning(f"Failed to fetch {topic} news: {response.status_code}")
             return []
-    
+
     # For General & Business, request per country
     articles_per_country = max_articles // len(countries)
     for country in countries:
         logging.info(f"Requesting {articles_per_country} {topic.upper()} articles from {country} in GNews")
-        
+
         params = {
             "token": GNEWS_API_KEY,
             "lang": "en",
@@ -85,3 +85,16 @@ def fetch_news(topic, countries, max_articles, single_request=False):
 
     logging.info(f"Total {topic.upper()} articles collected: {len(all_articles)}")
     return all_articles
+
+@app.get("/news")
+def get_news():
+    logging.info("Fetching news...")
+    
+    news_data = {
+        "General News (Canada)": fetch_news("general", ["ca"], 20),
+        "Business News (Canada & USA)": fetch_news("business", ["ca", "us"], 20),
+        "Technology News (Global)": fetch_news("technology", [], 20, single_request=True),
+    }
+    
+    logging.info("News fetch complete.")
+    return news_data
