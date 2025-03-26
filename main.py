@@ -93,7 +93,7 @@ def get_news():
     news_data = {
         "General News (Canada)": fetch_news("general", ["ca"], 20),
         "Business News (Canada & USA)": fetch_news("business", ["ca", "us"], 20),
-        "Technology News (Canada & USA)": fetch_news("technology", [], 20),
+        "Technology News (Canada & USA)": fetch_news("technology", [“ca”, “us”], 20, single_request=True),
     }
     
     logging.info("News fetch complete.")
